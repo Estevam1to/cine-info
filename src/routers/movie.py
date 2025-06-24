@@ -8,10 +8,10 @@ router = APIRouter(prefix="/chat/completions", tags=["Movies"])
 
 def get_ai_service() -> AIService:
     """
-    Injeção de dependência para AIService.
+    Dependency injection for AIService.
 
     Returns:
-        AIService: Instância do AIService para interagir com a API do Google Gemini.
+        AIService: AIService instance to interact with Google Gemini API.
     """
     return AIService()
 
@@ -21,17 +21,17 @@ async def get_movie_info(
     request: MovieRequest, ai_service: AIService = Depends(get_ai_service)
 ) -> MovieResponse:
     """
-    Obtém informações sobre um filme pelo seu título.
+    Get movie information by its title.
 
     Args:
-        request (MovieRequest): Requisição contendo o título do filme.
-        ai_service (AIService): Serviço de IA injetado como dependência.
+        request (MovieRequest): Request containing the movie title.
+        ai_service (AIService): AI service injected as dependency.
 
     Returns:
-        MovieResponse: JSON com informações do filme incluindo data de lançamento, bilheteria e sinopse.
+        MovieResponse: JSON with movie information including release date, box office and synopsis.
 
     Raises:
-        HTTPException: Erro ao processar a requisição ou obter informações do filme.
+        HTTPException: Error when processing request or getting movie information.
     """
     try:
         movie_info = ai_service.get_movie_info(request.title)

@@ -3,43 +3,43 @@ from pydantic import BaseModel, Field
 
 class MovieRequest(BaseModel):
     """
-    Modelo Pydantic para requisição de informações de filme.
+    Pydantic model for movie information request.
     """
 
     title: str = Field(
-        description="Titulo do filme que deseja obter informações",
+        description="Movie title to get information about",
         examples=["Interstellar", "The Matrix", "Inception", "Titanic"],
     )
 
 
 class MovieResponse(BaseModel):
     """
-    Modelo Pydantic para resposta de informações de filme.
+    Pydantic model for movie information response.
     """
 
     title: str = Field(
-        description="Título do filme",
+        description="Movie title",
         examples=["Interstellar"],
     )
     release_date: str = Field(
-        description="Data de lançamento do filme",
+        description="Movie release date",
         examples=["2014-11-07"],
     )
     box_office: str = Field(
-        description="Bilheteira do filme",
+        description="Movie box office earnings",
         examples=["$677,471,339"],
     )
     synopsis: str = Field(
-        description="Sinopse do filme",
+        description="Movie synopsis",
         examples=[
-            "Um grupo de exploradores viaja através de um buraco de minhoca próximo a Saturno em uma missão para garantir a sobrevivência da humanidade."
+            "A group of explorers travels through a wormhole near Saturn on a mission to ensure humanity's survival."
         ],
     )
 
 
 class LLmMovieResponse(BaseModel):
     """
-    Modelo Pydantic para resposta de informações de filme.
+    Pydantic model for LLM movie information response.
     """
 
     title: str

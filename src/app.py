@@ -5,7 +5,7 @@ from routers import movie
 
 app = FastAPI(
     title="CineInfo API",
-    description="API CineInfo fornece informações sobre filmes usando o modelo Gemini do Google.",
+    description="CineInfo API provides movie information using Google's Gemini model.",
     version="1.0.0",
 )
 
