@@ -1,4 +1,5 @@
 import json
+import traceback
 from http import HTTPStatus
 
 from fastapi import HTTPException
@@ -13,23 +14,6 @@ class AIService:
     """
     Service for interacting with Google Gemini API to get movie information.
     """
-
-    def _clean_markdown_response(self, response: str) -> str:
-        """
-        Remove markdown formatting from API response.
-
-        Args:
-            response (str): Raw API response.
-
-        Returns:
-            str: Clean response without markdown.
-        """
-        json_str = response.strip()
-        if json_str.startswith("```json"):
-            json_str = json_str.replace("```json", "").replace("```", "").strip()
-        elif json_str.startswith("```"):
-            json_str = json_str.replace("```", "").strip()
-        return json_str
 
     def generate_response(self, text: str) -> LLmMovieResponse:
         """
@@ -47,16 +31,11 @@ class AIService:
         try:
             client = Client(api_key=settings.GOOGLE_API_KEY)
 
-            retrieval_tool = types.Tool(
-                google_search_retrieval=types.GoogleSearchRetrieval(
-                    dynamic_retrieval_config=types.DynamicRetrievalConfig(
-                        mode=types.DynamicRetrievalConfigMode.MODE_DYNAMIC,
-                        dynamic_threshold=0.3,
-                    )
-                )
+            config = types.GenerateContentConfig(
+                temperature=0.7,
+                response_mime_type="application/json",
+                response_schema=LLmMovieResponse,
             )
-
-            config = types.GenerateContentConfig(tools=[retrieval_tool])
 
             contents = [
                 types.Content(parts=[types.Part(text=text)], role="user"),
@@ -71,6 +50,7 @@ class AIService:
             return response.text
         except Exception as e:
             logger.error(f"Error generating response: {str(e)}")
+            logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail=f"Error generating response: {str(e)}",
@@ -94,33 +74,39 @@ class AIService:
         """
         logger.info(f"Getting movie information for: {title}")
         try:
-            input_text = (
-                f"Please provide detailed information about the movie '{title}'. "
-                f"Respond with a JSON object containing the following fields: "
-                f"'title' (string), 'release_date' (string), 'box_office' (string), 'synopsis' (string). "
-                f"Make sure the response contains only valid JSON, without additional text or explanations. "
-                f"Respond in Portuguese."
-            )
+            input_text = f"""Please provide detailed information about the movie '{title}'.
+            Return a JSON object with the following fields:
+            - title (string): The movie's title in Portuguese
+            - release_date (string): Release date in YYYY-MM-DD format
+            - box_office (string): Box office revenue with currency symbol
+            - synopsis (string): A brief plot summary in Portuguese
+
+            Example response:
+            {{
+                "title": "O Rei Leão",
+                "release_date": "2019-07-19",
+                "box_office": "$1,662,000,000",
+                "synopsis": "Simba, o jovem leão, é herdeiro do trono do Reino da Pedra e precisa lutar contra o malvado Scar para recuperar seu direito ao trono."
+            }}
+
+            Return only valid JSON without additional text or markdown formatting.
+            """
 
             response = self.generate_response(text=input_text)
             logger.info(f"Response received: {response}")
 
-            json_str = self._clean_markdown_response(response)
-            movie_data = json.loads(json_str)
-
-            if isinstance(movie_data.get("box_office"), (int, float)):
-                movie_data["box_office"] = str(movie_data["box_office"])
-
-            return LLmMovieResponse(**movie_data)
+            return json.loads(response)
 
         except json.JSONDecodeError as e:
             logger.error(f"Error decoding JSON: {str(e)}")
+            logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail=f"Error processing API response: {str(e)}",
             )
         except Exception as e:
             logger.error(f"Error getting movie information: {str(e)}")
+            logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 detail=f"Error getting movie information: {str(e)}",
