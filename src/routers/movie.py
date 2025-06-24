@@ -38,5 +38,5 @@ async def get_movie_info(
         return movie_info
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Erro ao obter informações do filme: {str(e)}"
+            status_code=500, detail=f"Error getting movie information: {str(e)}"
         )
